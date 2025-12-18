@@ -56,6 +56,42 @@ export const login = async (req: Request, res: Response) => {
 };
 
 
+
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch user",
+    });
+  }
+};
+
+
 export const logout = async (_req: Request, res: Response) => {
   try {
     res.clearCookie("token", {
