@@ -97,6 +97,40 @@ export const getTasks = async (req: Request, res: Response) => {
   }
 };
 
+
+export const getMyTasks = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        creatorId: userId,
+      },
+      include: {
+        creator: {
+          select: { name: true },
+        },
+        assignedTo: {
+          select: { name: true },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      tasks,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch my tasks",
+    });
+  }
+};
+
 export const updateTask = async (req: Request, res: Response) => {
   try {
     const { id } = req.params; // task id from url params
