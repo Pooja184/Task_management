@@ -57,7 +57,7 @@ const Sidebar = ({
         <NavItem to="/overdue" label="Overdue Tasks" onClick={onClose} />
 
         <div className="mt-auto">
-          <button onClick={handleLogout} className="w-full border p-2 rounded hover:bg-gray-100">
+          <button onClick={handleLogout} className="w-full border p-2 rounded bg-red-500 hover:bg-red-600">
             Logout
           </button>
         </div>
