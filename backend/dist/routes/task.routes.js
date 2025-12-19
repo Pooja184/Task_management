@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const task_controller_1 = require("../controllers/task.controller");
+const taskRouter = (0, express_1.Router)();
+taskRouter.post("/add-task", auth_middleware_1.protect, task_controller_1.createTask);
+taskRouter.get("/get-tasks", auth_middleware_1.protect, task_controller_1.getTasks);
+taskRouter.put("/:id", auth_middleware_1.protect, task_controller_1.updateTask);
+taskRouter.delete("/:id", auth_middleware_1.protect, task_controller_1.deleteTask);
+taskRouter.get("/my-tasks", auth_middleware_1.protect, task_controller_1.getMyTasks);
+taskRouter.patch("/:taskId/status", auth_middleware_1.protect, task_controller_1.updateTaskStatus);
+taskRouter.get("/assigned-to-me", auth_middleware_1.protect, task_controller_1.getAssignedToMeTasks);
+taskRouter.get("/overdue", auth_middleware_1.protect, task_controller_1.getOverdueTasks);
+exports.default = taskRouter;

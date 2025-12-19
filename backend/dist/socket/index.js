@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getIO = exports.initSocket = void 0;
+const socket_io_1 = require("socket.io");
+let io;
+const initSocket = (server) => {
+    io = new socket_io_1.Server(server, {
+        cors: {
+            origin: process.env.CLIENT_URL,
+            credentials: true,
+        },
+    });
+    io.on("connection", (socket) => {
+        socket.on("join", (userId) => {
+            socket.join(userId);
+        });
+    });
+};
+exports.initSocket = initSocket;
+const getIO = () => io;
+exports.getIO = getIO;
