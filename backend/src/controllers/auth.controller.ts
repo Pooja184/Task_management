@@ -130,3 +130,127 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { name, email, password, currentPassword } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    //  If email or password is being updated → verify current password
+    if ((email || password) && !currentPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is required",
+      });
+    }
+
+    if (email || password) {
+      const isMatch = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: "Current password is incorrect",
+        });
+      }
+    }
+
+    const updatedData: any = {};
+
+    if (name) updatedData.name = name;
+    if (email) updatedData.email = email;
+    if (password) {
+      updatedData.password = await bcrypt.hash(password, 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updatedData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update profile",
+    });
+  }
+};
+
+
+
+export const getUsersSummary = async (req: Request, res: Response) => {
+  try {
+    const today = new Date();
+
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+
+        _count: {
+          select: {
+            tasksCreated: true,
+            tasksAssigned: true,
+          },
+        },
+
+        tasksAssigned: {
+          select: {
+            dueDate: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    const formattedUsers = users.map((user) => {
+      const overdueTasks = user.tasksAssigned.filter(
+        (task) =>
+          task.dueDate < today && task.status !== "Completed"
+      ).length;
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        tasksCreated: user._count.tasksCreated,
+        tasksAssigned: user._count.tasksAssigned,
+        overdueTasks,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      users: formattedUsers,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
