@@ -49,7 +49,7 @@ const Sidebar = ({
         </div>
 
         <NavItem to="/" label="Profile" onClick={onClose} />
-        <NavItem to="/users" label="All Users" onClick={onClose} />
+        <NavItem to="/summary" label="All Users" onClick={onClose} />
         <NavItem to="/add-task" label="Add Task" onClick={onClose} />
         <NavItem to="/all-tasks" label="All Tasks" onClick={onClose} />
         <NavItem to="/my-tasks" label="My Tasks" onClick={onClose} />
