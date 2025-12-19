@@ -1,5 +1,7 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { FiX } from "react-icons/fi";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/authContext";
 
 const Sidebar = ({
   isOpen,
@@ -8,6 +10,22 @@ const Sidebar = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
+
+ const navigate = useNavigate();
+  const { logout } = useAuth(); 
+
+  const handleLogout = async () => {
+    try {
+      await logout(); 
+      toast.success("Logged out successfully");
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Logout failed"
+      );
+    }
+  };
+
   return (
     <>
       {isOpen && (
@@ -39,7 +57,7 @@ const Sidebar = ({
         <NavItem to="/overdue" label="Overdue Tasks" onClick={onClose} />
 
         <div className="mt-auto">
-          <button className="w-full border p-2 rounded hover:bg-gray-100">
+          <button onClick={handleLogout} className="w-full border p-2 rounded hover:bg-gray-100">
             Logout
           </button>
         </div>
