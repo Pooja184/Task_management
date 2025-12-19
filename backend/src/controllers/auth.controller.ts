@@ -7,21 +7,65 @@ import { success } from "zod";
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
-  
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return res.status(400).json({ message: "User already exists" });
+
+    // basic validation
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
-  
-    const hashedPassword = await bcrypt.hash(password, 10);
-  
-    const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+
+    // check existing user
+    const existing = await prisma.user.findUnique({
+      where: { email },
     });
-  
-    res.status(201).json({ message: "User registered", user });
-  } catch (error:any) {
-    res.status(500).json({success:false,message:error.message})
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // create user
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    // generate token
+    const token = signToken(user.id);
+
+    // set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Registration failed",
+    });
   }
 };
 
@@ -29,34 +73,30 @@ export const login = async (req: Request, res: Response) => {
   try {
     // console.log(req.body)
     const { email, password } = req.body;
-    console.log(email)
+    console.log(email);
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-  
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-  
+
     const token = signToken(user.id);
-  
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
-      sameSite: "lax",
+      sameSite: "none",
     });
-  
+
     res.json({ message: "Login successful", user });
-  } catch (error:any) {
-    res.status(500).json({success:false,message:error.message})
-    
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
-
 
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
@@ -91,7 +131,6 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
-
 export const logout = async (_req: Request, res: Response) => {
   try {
     res.clearCookie("token", {
@@ -103,10 +142,10 @@ export const logout = async (_req: Request, res: Response) => {
       success: true,
       message: "Logged out successfully",
     });
-  } catch (error:any) {
+  } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message:error.message,
+      message: error.message,
     });
   }
 };
@@ -155,10 +194,7 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     if (email || password) {
-      const isMatch = await bcrypt.compare(
-        currentPassword,
-        user.password
-      );
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
 
       if (!isMatch) {
         return res.status(401).json({
@@ -199,8 +235,6 @@ export const updateProfile = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const getUsersSummary = async (req: Request, res: Response) => {
   try {
     const today = new Date();
@@ -229,8 +263,7 @@ export const getUsersSummary = async (req: Request, res: Response) => {
 
     const formattedUsers = users.map((user) => {
       const overdueTasks = user.tasksAssigned.filter(
-        (task) =>
-          task.dueDate < today && task.status !== "Completed"
+        (task) => task.dueDate < today && task.status !== "Completed"
       ).length;
 
       return {
