@@ -16,7 +16,9 @@ app.use(
     credentials: true,
   })
 );
-
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
 app.use("/api/v1", mainRouter);
 
 export default app;
