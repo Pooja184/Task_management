@@ -10,12 +10,13 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: true, 
+  credentials: true,
+};
+
+app.use(cors(corsOptions)); 
+
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
