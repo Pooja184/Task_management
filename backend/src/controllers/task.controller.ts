@@ -250,7 +250,6 @@ export const deleteTask = async (req: Request, res: Response) => {
 };
 
 
-
 export const updateTaskStatus = async (req: Request, res: Response) => {
   try {
     const userId = req.userId;
@@ -268,7 +267,7 @@ export const updateTaskStatus = async (req: Request, res: Response) => {
       });
     }
 
-    // only assigned user can update task status
+    //  Only assigned user can update status
     if (task.assignedToId !== userId) {
       return res.status(403).json({
         success: false,
@@ -281,12 +280,18 @@ export const updateTaskStatus = async (req: Request, res: Response) => {
       data: { status },
     });
 
-    res.status(200).json({
+    // SOCKET EMIT (REAL-TIME UPDATE)
+    getIO().emit("task-status-updated", {
+      taskId,
+      status,
+    });
+
+    return res.status(200).json({
       success: true,
       task: updatedTask,
     });
   } catch (error: any) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
@@ -328,5 +333,51 @@ export const getAssignedToMeTasks = async (
     });
   }
 };
+
+
+export const getOverdueTasks = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    const today = new Date();
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        dueDate: {
+          lt: today, //  due date before today
+        },
+        status: {
+          not: "Completed", //  not completed
+        },
+        OR: [
+          { creatorId: userId },     // created by me
+          { assignedToId: userId },  // assigned to me
+        ],
+      },
+      include: {
+        creator: {
+          select: { name: true },
+        },
+        assignedTo: {
+          select: { name: true },
+        },
+      },
+      orderBy: {
+        dueDate: "asc", // oldest overdue first
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      tasks,
+    });
+  } catch (error: any) {
+    console.error("Overdue Task Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch overdue tasks",
+    });
+  }
+};
+
 
 
