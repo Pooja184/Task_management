@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { protect } from "../middlewares/auth.middleware";
-import { createTask, deleteTask, getAssignedToMeTasks, getMyTasks, getTasks, updateTask, updateTaskStatus } from "../controllers/task.controller";
+import { createTask, deleteTask, getAssignedToMeTasks, getMyTasks, getOverdueTasks, getTasks, updateTask, updateTaskStatus } from "../controllers/task.controller";
 
 const taskRouter=Router();
 
@@ -11,4 +11,5 @@ taskRouter.delete("/:id",protect,deleteTask)
 taskRouter.get("/my-tasks",protect,getMyTasks)
 taskRouter.patch("/:taskId/status",protect,updateTaskStatus)
 taskRouter.get("/assigned-to-me",protect,getAssignedToMeTasks)
+taskRouter.get("/overdue",protect,getOverdueTasks)
 export default taskRouter;
