@@ -7,6 +7,8 @@ import Dashboard from "./pages/Dashboard";
 import AddTask from "./pages/AddTask";
 import Profile from "./pages/Profile";
 import AllTasks from "./pages/AllTask";
+import MyTasks from "./pages/MyTasks";
+import AssignedToMe from "./pages/AssignedToMe";
 
 function App() {
   return (
@@ -43,6 +45,8 @@ function App() {
           <Route path="add-task" element={<AddTask />} />
           <Route path="/" element={<Profile />} />
           <Route path="all-tasks" element={<AllTasks/>}/>
+          <Route path="my-tasks" element={<MyTasks/>}/>
+          <Route path="/assigned" element={<AssignedToMe/>}/>
         </Route>
       </Routes>
     </BrowserRouter>
