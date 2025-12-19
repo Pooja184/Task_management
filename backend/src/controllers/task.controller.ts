@@ -196,10 +196,21 @@ export const updateTask = async (req: Request, res: Response) => {
 
 export const deleteTask = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params; // task id from params
+    const userId = req.userId;       // from auth middleware
+    const { id } = req.params;       // task id
 
-    // checking if task exists before deleting
-    const task = await prisma.task.findUnique({ where: { id } });
+    // console.log(id,"id",userId,"user")
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Task id is required",
+      });
+    }
+    // Check if task exists
+    const task = await prisma.task.findUnique({
+      where: { id },
+    });
 
     if (!task) {
       return res.status(404).json({
@@ -208,23 +219,114 @@ export const deleteTask = async (req: Request, res: Response) => {
       });
     }
 
-    // deleting task from database
-    await prisma.task.delete({ where: { id } });
+    // auth check
+    if (task.creatorId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to delete this task",
+      });
+    }
 
-    // emitting delete event so frontend can remove task instantly
+    // Delete task
+    await prisma.task.delete({
+      where: { id },
+    });
+
+    //  Emit socket event
     getIO().emit("task-deleted", id);
 
     return res.status(200).json({
       success: true,
       message: "Task deleted successfully",
     });
-
   } catch (error: any) {
     console.error("Delete Task Error:", error);
 
     return res.status(500).json({
       success: false,
+      message: error.message || "Failed to delete task",
+    });
+  }
+};
+
+
+
+export const updateTaskStatus = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { taskId } = req.params;
+    const { status } = req.body;
+
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+    }
+
+    // only assigned user can update task status
+    if (task.assignedToId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Only assigned user can update status",
+      });
+    }
+
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: { status },
+    });
+
+    res.status(200).json({
+      success: true,
+      task: updatedTask,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
+
+export const getAssignedToMeTasks = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userId = req.userId;
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        assignedToId: userId, //assigned to logged-in user
+      },
+      include: {
+        creator: {
+          select: { name: true },
+        },
+        assignedTo: {
+          select: { name: true },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      tasks,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch assigned tasks",
+    });
+  }
+};
+
+
