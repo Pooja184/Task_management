@@ -5,6 +5,7 @@ type AuthContextType = {
   user: any;
   loading: boolean;
   setUser: (user: any) => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -28,8 +29,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     checkAuth();
   }, []);
 
+  const logout = async () => {
+  await api.post("/auth/logout");
+  setUser(null);        
+};
+
   return (
-    <AuthContext.Provider value={{ user, loading, setUser }}>
+    <AuthContext.Provider value={{ user, loading, setUser,logout }}>
       {children}
     </AuthContext.Provider>
   );
