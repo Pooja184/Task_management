@@ -9,6 +9,8 @@ import Profile from "./pages/Profile";
 import AllTasks from "./pages/AllTask";
 import MyTasks from "./pages/MyTasks";
 import AssignedToMe from "./pages/AssignedToMe";
+import OverdueTasks from "./pages/OverdueTasks";
+import AllUsers from "./pages/AllUsers";
 
 function App() {
   return (
@@ -46,7 +48,9 @@ function App() {
           <Route path="/" element={<Profile />} />
           <Route path="all-tasks" element={<AllTasks/>}/>
           <Route path="my-tasks" element={<MyTasks/>}/>
-          <Route path="/assigned" element={<AssignedToMe/>}/>
+          <Route path="assigned" element={<AssignedToMe/>}/>
+          <Route path="overdue" element={<OverdueTasks/>}/>
+          <Route path="summary" element={<AllUsers/>}/> 
         </Route>
       </Routes>
     </BrowserRouter>
